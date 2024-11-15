@@ -20,13 +20,14 @@ def remove_anomalous(sample_data: dict, sample_menu: tk.Menu, sample_checkbutton
 
     mean = np.mean(x_t)
     std = np.std(x_t)
-    k = 5  # [3, 9]
+    k = 4  # recommended to set k from the interval [3, 9]
 
     temp = [x_t[0], x_t[1]]
     for i in range(2, len(x_t)):
         if mean - k * std < x_t[i] < mean + k * std:
             temp.append(x_t[i])
         else:
+            print('*')
             x_new = 2 * x_t[i - 1] - x_t[i - 2]
             temp.append(x_new)
 
@@ -242,7 +243,3 @@ def tema(sample_data: dict, fig1, ax1) -> None:
     ax1.plot(t, T, c='gray')
     fig1.canvas.draw()
     fig1.canvas.flush_events()
-
-
-
-
