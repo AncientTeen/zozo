@@ -1,6 +1,9 @@
 import numpy as np
+import tkinter as tk
+from tkinter import *
 
 """This file is used to calculate trend criteria"""
+
 
 def sign_criterion(x_t: list) -> float:
     """
@@ -44,6 +47,7 @@ def mann_criterion(x_t: list) -> float:
     u = (T + 0.5 - E_T) / np.sqrt(D_T)
 
     return u
+
 
 def series_criterion(x_t: list) -> tuple[int, int]:
     """
@@ -119,3 +123,159 @@ def abbe_criterion(x_t: list) -> float:
     u = (gamma - 1) * np.sqrt((n ** 2 - 1) / (n - 2))
 
     return u
+
+
+def identification_lin_trend(sample_data: dict, fig1, ax1) -> None:
+    """
+    function for identification a linear trend
+    """
+    for i in range(1, len(sample_data) + 1):
+        samp = f"Вибірка {i}"
+        if sample_data[samp]['var'].get() == 1:
+            s_n = samp
+
+    x_t = sample_data[s_n]["data"]
+    N = len(x_t)
+    t = [i for i in range(1, N + 1)]
+
+    mean_x = np.mean(x_t)
+    mean_t = np.mean(t)
+
+    mean_t_sq = np.mean([t[i] ** 2 for i in range(N)])
+    mean_tx = np.mean([(x_t[i] * t[i]) for i in range(N)])
+
+    a_0 = (mean_x * mean_t_sq - mean_t * mean_tx) / (mean_t_sq - mean_t ** 2)
+    a_1 = (mean_tx - mean_t * mean_x) / (mean_t_sq - mean_t ** 2)
+
+    x_t_new = [(a_0 + a_1 * t[i]) for i in range(N)]
+
+    ax1.plot(t, x_t_new, c='red')
+    fig1.canvas.draw()
+    fig1.canvas.flush_events()
+
+
+def remove_lin_trend(sample_data: dict, sample_menu: tk.Menu, sample_checkbuttons: list) -> None:
+    """
+    function for extracting a linear trend
+    """
+    for i in range(1, len(sample_data) + 1):
+        samp = f"Вибірка {i}"
+        if sample_data[samp]['var'].get() == 1:
+            s_n = samp
+
+    x_t = sample_data[s_n]["data"]
+    N = len(x_t)
+    t = [i for i in range(1, N + 1)]
+
+    mean_x = np.mean(x_t)
+    mean_t = np.mean(t)
+
+    mean_t_sq = np.mean([t[i] ** 2 for i in range(N)])
+    mean_tx = np.mean([(x_t[i] * t[i]) for i in range(N)])
+
+    a_0 = (mean_x * mean_t_sq - mean_t * mean_tx) / (mean_t_sq - mean_t ** 2)
+    a_1 = (mean_tx - mean_t * mean_x) / (mean_t_sq - mean_t ** 2)
+
+    x_trend = [(a_0 + a_1 * t[i]) for i in range(N)]
+
+    x_t_new = [x_t[i] - x_trend[i] for i in range(N)]
+    # x_t_new = [x_t[i] - x_trend[i] if x_t[i] < x_trend[i] else x_t[i] + x_trend[i] for i in range(N)]
+
+    sample_num = len(sample_data) + 1
+    sample_name = f"Вибірка {sample_num}"
+    sample_var = tk.IntVar()
+    sample_data[sample_name] = {"data": x_t_new, "var": sample_var}
+    checkbutton = Checkbutton(text=sample_name, variable=sample_var)
+    sample_checkbuttons.append(checkbutton)
+    sample_menu.add_checkbutton(label=sample_name, variable=sample_var)
+
+
+def identification_parab_trend(sample_data: dict, fig1, ax1) -> None:
+    """
+    function for identification a polynomial trend
+    """
+    for i in range(1, len(sample_data) + 1):
+        samp = f"Вибірка {i}"
+        if sample_data[samp]['var'].get() == 1:
+            s_n = samp
+
+    x_t = sample_data[s_n]["data"]
+    N = len(x_t)
+    t = [i for i in range(1, N + 1)]
+
+    mean_x = np.mean(x_t)
+    mean_t = np.mean(t)
+
+    mean_t_sq = np.mean([t[i] ** 2 for i in range(N)])
+    mean_t_trd = np.mean([t[i] ** 3 for i in range(N)])
+    mean_t_frth = np.mean([t[i] ** 4 for i in range(N)])
+
+    mean_tx = np.mean([(x_t[i] * t[i]) for i in range(N)])
+    mean_tx_sq = np.mean([(x_t[i] * (t[i] ** 2)) for i in range(N)])
+
+    D = (mean_t_sq * mean_t_frth - mean_t_trd ** 2) - mean_t * (
+            mean_t * mean_t_frth - mean_t_sq * mean_t_trd) + mean_t_sq * (mean_t * mean_t_trd - mean_t_sq ** 2)
+
+    a_0 = (mean_x * (mean_t_sq * mean_t_frth - mean_t_trd ** 2) - mean_t * (
+            mean_tx * mean_t_frth - mean_t_trd * mean_tx_sq) + mean_t_sq * (
+                   mean_tx * mean_t_trd - mean_t_sq * mean_tx_sq)) / D
+    a_1 = ((mean_tx * mean_t_frth - mean_t_trd * mean_tx_sq) - mean_x * (
+            mean_t * mean_t_frth - mean_t_sq * mean_t_trd) + mean_t_sq * (
+                       mean_t * mean_tx_sq - mean_tx * mean_t_sq)) / D
+    a_2 = ((mean_t_sq * mean_tx_sq - mean_tx * mean_t_trd) - mean_t * (
+                mean_t * mean_tx_sq - mean_tx * mean_t_sq) + mean_x * (mean_t * mean_t_trd - mean_t_sq ** 2)) / D
+
+    x_t_new = [(a_0 + a_1 * t[i] + a_2 * t[i] ** 2) for i in range(N)]
+
+    ax1.plot(t, x_t_new, c='green')
+    fig1.canvas.draw()
+    fig1.canvas.flush_events()
+
+
+def remove_parab_trend(sample_data: dict, sample_menu: tk.Menu, sample_checkbuttons: list) -> None:
+    """
+    function for extracting a polynomial trend
+    """
+    for i in range(1, len(sample_data) + 1):
+        samp = f"Вибірка {i}"
+        if sample_data[samp]['var'].get() == 1:
+            s_n = samp
+
+    x_t = sample_data[s_n]["data"]
+    N = len(x_t)
+    t = [i for i in range(1, N + 1)]
+
+    mean_x = np.mean(x_t)
+    mean_t = np.mean(t)
+
+    mean_t_sq = np.mean([t[i] ** 2 for i in range(N)])
+    mean_t_trd = np.mean([t[i] ** 3 for i in range(N)])
+    mean_t_frth = np.mean([t[i] ** 4 for i in range(N)])
+
+    mean_tx = np.mean([(x_t[i] * t[i]) for i in range(N)])
+    mean_tx_sq = np.mean([(x_t[i] * (t[i] ** 2)) for i in range(N)])
+
+    D = (mean_t_sq * mean_t_frth - mean_t_trd ** 2) - mean_t * (
+            mean_t * mean_t_frth - mean_t_sq * mean_t_trd) + mean_t_sq * (mean_t * mean_t_trd - mean_t_sq ** 2)
+
+    a_0 = (mean_x * (mean_t_sq * mean_t_frth - mean_t_trd ** 2) - mean_t * (
+            mean_tx * mean_t_frth - mean_t_trd * mean_tx_sq) + mean_t_sq * (
+                   mean_tx * mean_t_trd - mean_t_sq * mean_tx_sq)) / D
+    a_1 = ((mean_tx * mean_t_frth - mean_t_trd * mean_tx_sq) - mean_x * (
+            mean_t * mean_t_frth - mean_t_sq * mean_t_trd) + mean_t_sq * (
+                       mean_t * mean_tx_sq - mean_tx * mean_t_sq)) / D
+    a_2 = ((mean_t_sq * mean_tx_sq - mean_tx * mean_t_trd) - mean_t * (
+                mean_t * mean_tx_sq - mean_tx * mean_t_sq) + mean_x * (mean_t * mean_t_trd - mean_t_sq ** 2)) / D
+
+    x_trend = [(a_0 + a_1 * t[i] + a_2 * t[i] ** 2) for i in range(N)]
+
+    x_t_new = [x_t[i] - x_trend[i] for i in range(N)]
+    # x_t_new = [x_t[i] - x_trend[i] if x_t[i] < x_trend[i] else x_t[i] + x_trend[i] for i in range(N)]
+
+    sample_num = len(sample_data) + 1
+    sample_name = f"Вибірка {sample_num}"
+    sample_var = tk.IntVar()
+    sample_data[sample_name] = {"data": x_t_new, "var": sample_var}
+    checkbutton = Checkbutton(text=sample_name, variable=sample_var)
+    sample_checkbuttons.append(checkbutton)
+    sample_menu.add_checkbutton(label=sample_name, variable=sample_var)
