@@ -5,8 +5,6 @@ import numpy as np
 def sign_criterion(x_t: list) -> float:
     """
     sign criterion function
-    :param x_t: list - time series data
-    :return: tuple[float, float] - C value and normal distribution quantile
     """
     n = len(x_t)
     y = []
@@ -29,8 +27,6 @@ def sign_criterion(x_t: list) -> float:
 def mann_criterion(x_t: list) -> float:
     """
     mann criterion function
-    :param x_t: list - time series data
-    :return: float - u value
     """
     n = len(x_t)
     T_matrix = [[0 for j in range(n)] for i in range(n - 1)]
@@ -52,8 +48,6 @@ def mann_criterion(x_t: list) -> float:
 def series_criterion(x_t: list) -> tuple[int, int]:
     """
     series criterion function
-    :param x_t: list - time series data
-    :return: tuple[int, int] - v and u values
     """
     n = len(x_t)
     median = np.median(x_t)
@@ -86,8 +80,6 @@ def series_criterion(x_t: list) -> tuple[int, int]:
 def rise_n_fall_criterion(x_t: list) -> tuple[int, int]:
     """
      "rising" and "falling" series criterion function
-     :param x_t: list - time series data
-     :return: tuple[int, int] - v and u values
      """
     n = len(x_t)
     y = [1 if (x_t[i + 1] - x_t[i]) >= 0 else -1 for i in range(n - 1)]
@@ -115,8 +107,6 @@ def rise_n_fall_criterion(x_t: list) -> tuple[int, int]:
 def abbe_criterion(x_t: list) -> float:
     """
     abbe criterion function
-    :param x_t: list - time series data
-    :return: tuple[float, float] - gamma and u values
     """
 
     n = len(x_t)
