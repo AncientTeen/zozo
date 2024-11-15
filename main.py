@@ -11,7 +11,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 
 from transformations import remove_anomalous, median_smoothing, sma, wma, ema, dema, tema
-from trend_functions import sign_criterion, mann_criterion, series_criterion, rise_n_fall_criterion, abbe_criterion
+from trend_functions import sign_criterion, mann_criterion, series_criterion, rise_n_fall_criterion, abbe_criterion, \
+    identification_lin_trend, remove_lin_trend, identification_parab_trend, remove_parab_trend
 
 array: list = []
 fig1, ax1 = None, None
@@ -226,7 +227,9 @@ def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.T
     if event.button == 3:
         function_list = ["Вилучення аномальних значень", "Медіанне згладжування", "Просте ковзне середнє",
                          "Зважене ковзне середнє", "Експоненціальне ковзне середнє",
-                         "Подвійне експоненціальне ковзне середнє", "Потрійне експоненціальне ковзне середнє", "Очистити"]
+                         "Подвійне експоненціальне ковзне середнє", "Потрійне експоненціальне ковзне середнє",
+                         "Індентифікація лінійного тренду", "Вилучення лінійного тренду",
+                         "Індентифікація параболічного тренду", "Вилучення параболічного тренду", "Очистити"]
 
         function_list_window = Toplevel(root)
 
@@ -260,6 +263,22 @@ def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.T
                 elif selected_function == "Потрійне експоненціальне ковзне середнє":
                     tema(sample_data, fig1, ax1)
                     pass
+                elif selected_function == "Індентифікація лінійного тренду":
+                    identification_lin_trend(sample_data, fig1, ax1)
+                    pass
+
+                elif selected_function == "Вилучення лінійного тренду":
+                    remove_lin_trend(sample_data, sample_menu, sample_checkbuttons)
+                    pass
+                elif selected_function == "Індентифікація параболічного тренду":
+                    identification_parab_trend(sample_data, fig1, ax1)
+                    pass
+
+                elif selected_function == "Вилучення параболічного тренду":
+                    remove_parab_trend(sample_data, sample_menu, sample_checkbuttons)
+                    pass
+
+
                 elif selected_function == "Очистити":
                     showSample()
                     pass
