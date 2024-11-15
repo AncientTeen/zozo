@@ -1,3 +1,4 @@
+import matplotlib
 import numpy as np
 import tkinter as tk
 from tkinter import *
@@ -9,13 +10,11 @@ from tkinter import filedialog as fd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 
-
-from transformations import display_function_list
+from transformations import remove_anomalous, median_smoothing, sma, wma, ema, dema, tema
 from trend_functions import sign_criterion, mann_criterion, series_criterion, rise_n_fall_criterion, abbe_criterion
 
-
-
 array: list = []
+fig1, ax1 = None, None
 sample_data: dict = {}
 samplesGroup: dict = {}
 sample_checkbuttons: list = []
@@ -24,9 +23,7 @@ sample_checkbuttons: list = []
 def openFile() -> None:
     """
     function that opens file and put it to the sample_data
-    :return: None
     """
-
 
     root.filename = fd.askopenfilename(initialdir="/", title="Select file", filetypes=[('All Files', '*.*'),
                                                                                        ('Python Files', '*.py'),
@@ -56,16 +53,11 @@ def openFile() -> None:
         sample_checkbuttons.append(checkbutton)
         sample_menu.add_checkbutton(label=sample_name, variable=sample_var)
 
-    # print(sample_data)
-    print(type(root))
-    # print(type(sample_menu))
 
 def visualization() -> None:
     """
     function that visualizes time series
-    :return: None
     """
-
 
     for i in range(1, len(sample_data) + 1):
         str = f"Вибірка {i}"
@@ -83,18 +75,14 @@ def visualization() -> None:
 
     ax1.plot(t, x_t)
 
-
     def on_left_click(event):
-        print(f"Left click at ({event.xdata}, {event.ydata})")
-        print(type(event))
-
+        pass
 
     def on_right_click(event):
-        display_function_list(event, root, sample_data, sample_menu, sample_checkbuttons) #, x, y)
+        display_function_list(event, root, sample_data, sample_menu, sample_checkbuttons, fig1, ax1)  # , x, y)
 
     fig1.canvas.mpl_connect('button_press_event', on_left_click)
     fig1.canvas.mpl_connect('button_press_event', on_right_click)
-
 
     variation_series_out = FigureCanvasTkAgg(fig1, master=root)
     variation_series_out.get_tk_widget().grid(row=0, column=0, sticky='nw')
@@ -106,10 +94,7 @@ def visualization() -> None:
 def characteristics(tau: int = 5) -> None:
     """
     function that calculates characteristics of time series
-    :param tau: int - value for autocovariation and autocorrelation functions
-    :return: None
     """
-
 
     for i in range(1, len(sample_data) + 1):
         samp = f"Вибірка {i}"
@@ -133,8 +118,6 @@ def characteristics(tau: int = 5) -> None:
     for i in range(len(t)):
         T1.insert(END, f'{t[i]}   {x_t[i]:.4f}\n')
 
-
-
     """Characteristics of time series"""
     T2 = Text(master=text_frame, height=15, width=30)
     T2.pack(side=LEFT, padx=(0, 5))
@@ -146,15 +129,11 @@ def characteristics(tau: int = 5) -> None:
     T2.insert(END, f'hat(m): {mean:.4f}\n')
     T2.insert(END, f'hat(σ): {std:.4f}\n')
 
-
     autocovariation = sum([(x_t[i] - mean) * (x_t[i + tau] - mean) for i in range(N - tau)]) / (N - tau)
     autocorelation = autocovariation / std
 
     T2.insert(END, f'\u03B3({tau}): {autocovariation:.4f}\n')
     T2.insert(END, f'r({tau}): {autocorelation:.4f}\n')
-
-
-
 
     """trend"""
     T3 = Text(master=text_frame, height=15, width=50)
@@ -169,24 +148,22 @@ def characteristics(tau: int = 5) -> None:
     C = sign_criterion(x_t)
 
     if C > critical_value:
-        T3.insert(END, f"Тенденція на спадання: C = {C:.3f}, критичне значення = ±{critical_value:.3f}\n")
+        T3.insert(END, f"Тенденція на спадання: C = {C:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
     elif C < -critical_value:
-        T3.insert(END, f"Тенденція на зростання: C = {C:.3f}, критичне значення = ±{critical_value:.3f}\n")
+        T3.insert(END, f"Тенденція на зростання: C = {C:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
     else:
-        T3.insert(END, f"Процес стаціонарний: C = {C:.3f}, критичне значення = ±{critical_value:.3f}\n")
-
+        T3.insert(END, f"Процес стаціонарний: C = {C:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
 
     T3.insert(END, '\nКритерій Манна:\n')
 
     u1 = mann_criterion(x_t)
 
     if u1 > critical_value:
-        T3.insert(END, f"Тенденція на спадання: u = {u1:.3f}, критичне значення = ±{critical_value:.3f}\n")
+        T3.insert(END, f"Тенденція на спадання: u = {u1:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
     elif u1 < -critical_value:
-        T3.insert(END, f"Тенденція на зростання: u = {u1:.3f}, критичне значення = ±{critical_value:.3f}\n")
+        T3.insert(END, f"Тенденція на зростання: u = {u1:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
     else:
-        T3.insert(END, f"Процес стаціонарний: u = {u1:.3f}, критичне значення = ±{critical_value:.3f}\n")
-
+        T3.insert(END, f"Процес стаціонарний: u = {u1:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
 
     T3.insert(END, '\nКритерій серій:\n')
 
@@ -195,11 +172,10 @@ def characteristics(tau: int = 5) -> None:
     v1_check = trunc((N + 1 - 1.96 * np.sqrt(N - 1)) / 2)
     d1_check = trunc(3.3 * np.log(N + 1))
     if v1 > v1_check and d1 < d1_check:
-        T3.insert(END, f"Процес стаціонарний: (V(N), D(N)) = ({v1:.3f}, {d1:.3f}), критичні значення = ({v1_check}, {d1_check})\n")
+        T3.insert(END,
+                  f"Процес стаціонарний: (V(N), D(N)) = ({v1}, {d1}), \nкритичні значення = ({v1_check}, {d1_check})\n")
     else:
-        T3.insert(END, f"Тренд існує: (V(N), D(N)) = ({v1:.3f}, {d1:.3f}), критичні значення = ({v1_check}, {d1_check})\n")
-
-
+        T3.insert(END, f"Тренд існує: (V(N), D(N)) = ({v1}, {d1}), \nкритичні значення = ({v1_check}, {d1_check})\n")
 
     T3.insert(END, '\nКритерій \'зростаючих\' і \'спадаючих\' серій:\n')
 
@@ -214,39 +190,84 @@ def characteristics(tau: int = 5) -> None:
     elif N > 153:
         d2_check = 7
 
-
     if v2 > v2_check and d2 < d2_check:
         T3.insert(END,
-                  f"Процес стаціонарний: (V(N), D(N)) = ({v2:.3f}, {d2:.3f}), критичні значення = ({v2_check}, {d2_check})\n")
+                  f"Процес стаціонарний: (V(N), D(N)) = ({v2}, {d2}), \nкритичні значення = ({v2_check}, {d2_check})\n")
     else:
         T3.insert(END,
-                  f"Тренд існує: (V(N), D(N)) = ({v1:.3f}, {d1:.3f}), критичні значення = ({v1_check}, {d1_check})\n")
-
+                  f"Тренд існує: (V(N), D(N)) = ({v2}, {d2}), \nкритичні значення = ({v2_check}, {d2_check})\n")
 
     T3.insert(END, '\nКритерій Аббе:\n')
 
     u2 = abbe_criterion(x_t)
 
-
     if u2 > critical_value:
-        T3.insert(END, f"Тенденція на спадання: u = {u2:.3f}, критичне значення = ±{critical_value:.3f}\n")
+        T3.insert(END, f"Тенденція на спадання: u = {u2:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
     elif u2 < -critical_value:
-        T3.insert(END, f"Тенденція на зростання: u = {u2:.3f}, критичне значення = ±{critical_value:.3f}\n")
+        T3.insert(END, f"Тенденція на зростання: u = {u2:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
     else:
-        T3.insert(END, f"Процес стаціонарний: u = {u2:.3f}, критичне значення = ±{critical_value:.3f}\n")
-
-
+        T3.insert(END, f"Процес стаціонарний: u = {u2:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
 
 
 def showSample() -> None:
     """
     function that calls visualization and characteristics functions
-    :return: None
     """
-
-
     visualization()
     characteristics()
+
+
+def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.Tk, sample_data: dict,
+                          sample_menu: tk.Menu, sample_checkbuttons: list, fig1, ax1):  # , x, y):
+    """
+    function that displays list of transformation functions when right-clicked on graph
+    """
+
+    if event.button == 3:
+        function_list = ["Вилучення аномальних значень", "Медіанне згладжування", "Просте ковзне середнє",
+                         "Зважене ковзне середнє", "Експоненціальне ковзне середнє",
+                         "Подвійне експоненціальне ковзне середнє", "Потрійне експоненціальне ковзне середнє", "Очистити"]
+
+        function_list_window = Toplevel(root)
+
+        listbox = Listbox(function_list_window, selectmode=SINGLE, width=40, height=15)
+        for function_name in function_list:
+            listbox.insert(END, function_name)
+
+        def select_function(event):
+            selected_index = listbox.curselection()
+            if selected_index:
+                selected_function = function_list[selected_index[0]]
+
+                if selected_function == "Вилучення аномальних значень":
+                    remove_anomalous(sample_data, sample_menu, sample_checkbuttons)
+                    pass
+                elif selected_function == "Медіанне згладжування":
+                    median_smoothing(sample_data, fig1, ax1)
+                    pass
+                elif selected_function == "Просте ковзне середнє":
+                    sma(sample_data, fig1, ax1)
+                    pass
+                elif selected_function == "Зважене ковзне середнє":
+                    wma(sample_data, fig1, ax1)
+                    pass
+                elif selected_function == "Експоненціальне ковзне середнє":
+                    ema(sample_data, fig1, ax1)
+                    pass
+                elif selected_function == "Подвійне експоненціальне ковзне середнє":
+                    dema(sample_data, fig1, ax1)
+                    pass
+                elif selected_function == "Потрійне експоненціальне ковзне середнє":
+                    tema(sample_data, fig1, ax1)
+                    pass
+                elif selected_function == "Очистити":
+                    showSample()
+                    pass
+                function_list_window.destroy()
+
+        listbox.bind('<ButtonRelease-1>', select_function)
+
+        listbox.pack()
 
 
 root = Tk()
@@ -265,12 +286,3 @@ filemenu.add_cascade(label="Вибірки", menu=sample_menu)
 filemenu.add_command(label='Відобразити', command=showSample)
 
 root.mainloop()
-
-
-
-
-
-
-
-
-
