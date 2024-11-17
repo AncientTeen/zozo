@@ -3,13 +3,13 @@ import numpy as np
 import tkinter as tk
 from tkinter import *
 from math import trunc
-from icecream import ic
 from scipy.stats import norm
 import matplotlib.pyplot as plt
-from tkinter import filedialog as fd
+from tkinter import filedialog as fd, simpledialog
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 
+from ssa import decomposition, recomposition, ssa_forecasting
 from transformations import remove_anomalous, median_smoothing, sma, wma, ema, dema, tema
 from trend_functions import sign_criterion, mann_criterion, series_criterion, rise_n_fall_criterion, abbe_criterion, \
     identification_lin_trend, remove_lin_trend, identification_parab_trend, remove_parab_trend
@@ -18,7 +18,10 @@ array: list = []
 fig1, ax1 = None, None
 sample_data: dict = {}
 samplesGroup: dict = {}
+text_frame: tk.Frame = None
 sample_checkbuttons: list = []
+Y, eigenvectors, M = None, None, None
+
 
 
 def openFile() -> None:
@@ -92,7 +95,7 @@ def visualization() -> None:
     toolbar.grid(row=1, column=0)
 
 
-def characteristics(tau: int = 5) -> None:
+def characteristics(tau: int = 5, Y: np.ndarray = None, eigenvals: np.ndarray = None) -> None:
     """
     function that calculates characteristics of time series
     """
@@ -110,7 +113,7 @@ def characteristics(tau: int = 5) -> None:
     text_frame.grid(row=3, column=0, columnspan=2, sticky='w', padx=5, pady=5)
 
     """Time series output"""
-    T1 = Text(master=text_frame, height=15, width=20)
+    T1 = Text(master=text_frame, height=15, width=15)
     T1.pack(side=LEFT, padx=(0, 5))
     T1.delete('1.0', END)
     T1.insert(END, 'Часовий ряд:\n\n')
@@ -137,14 +140,16 @@ def characteristics(tau: int = 5) -> None:
     T2.insert(END, f'r({tau}): {autocorelation:.4f}\n')
 
     """trend"""
-    T3 = Text(master=text_frame, height=15, width=50)
+    T3 = Text(master=text_frame, height=15, width=45)
     T3.pack(side=LEFT)
     T3.delete('1.0', END)
     T3.insert(END, 'Аналіз тренду:\n\n')
 
     critical_value = norm.ppf(1 - 0.05 / 2)
 
-    T3.insert(END, 'Критерій знаків:\n')
+    T3.insert(END, ''
+                   ''
+                   'Критерій знаків:\n')
 
     C = sign_criterion(x_t)
 
@@ -209,6 +214,60 @@ def characteristics(tau: int = 5) -> None:
     else:
         T3.insert(END, f"Процес стаціонарний: u = {u2:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
 
+    if Y is not None:
+        T4 = Text(master=text_frame, height=15, width=60)
+        T4.pack(side=LEFT, padx=(0, 5))
+        T4.delete('1.0', END)
+        T4.insert(END, 'Декомпозиція:\n\n')
+
+        """I don`t like how it looks"""
+        # T4.insert(END, 'Y:\n\n')
+        # for i in range(len(Y)):
+        #     for j in range(len(Y[i])):
+        #         T4.insert(END, f"{Y[i][j]:.2f} ")
+        #     T4.insert(END, f"\n")
+        #
+        # T4.insert(END, f"\n")
+        #
+        # T4.insert(END, f"\nВласні числа: \t")
+        # for i in range(len(eigenvals)):
+        #     T4.insert(END, f"{eigenvals[i]:.4f}\t\t")
+        # T4.insert(END, f"\n")
+        #
+        # T4.insert(END, f"\n% на напрям:  \t")
+        # percentDir = [eigenvals[i] / len(eigenvals) for i in range(len(eigenvals))]
+        # for i in range(len(eigenvals)):
+        #     T4.insert(END, f"{percentDir[i] * 100:.4f}%\t\t")
+        # T4.insert(END, f"\n")
+        #
+        # T4.insert(END, f"\nНакопичений %:\t")
+        # perc = 0
+        # for i in range(len(eigenvals)):
+        #     perc += percentDir[i] * 100
+        #     T4.insert(END, f"{perc:.4f}%\t\t")
+        # T4.insert(END, f"\n\n")
+        total_variance = np.sum(eigenvals)
+        single_variance = [(eigenvals[i] / total_variance) for i in range(len(eigenvals))]
+        cumulative_variance = np.cumsum(eigenvals) / total_variance
+
+        T4.insert(END, f"Власні числа ряду після декомпозиції:\n")
+
+        for i in range(len(eigenvals)):
+            T4.insert(END, f"{eigenvals[i]:.2f}\t")
+        T4.insert(END, f"\n\n")
+
+        T4.insert(END, f"% на напрям:\n")
+        for i in range(len(single_variance)):
+            T4.insert(END, f"{(single_variance[i] * 100):.2f}%\t")
+        T4.insert(END, f"\n\n")
+
+        T4.insert(END, f"Накопичений %:\n")
+        for i in range(len(cumulative_variance)):
+            T4.insert(END, f"{(cumulative_variance[i] * 100):.2f}%\t")
+        T4.insert(END, f"\n\n")
+    else:
+        pass
+
 
 def showSample() -> None:
     """
@@ -216,6 +275,114 @@ def showSample() -> None:
     """
     visualization()
     characteristics()
+
+
+def ssa_decomposition(sample_data: dict) -> None:
+    """
+    function for setting parameter M by user in window and decomposition
+    """
+    global Y, eigenvectors, M  # Declare global variables
+
+    s_n = None
+    for i in range(1, len(sample_data) + 1):
+        samp = f"Вибірка {i}"
+        if sample_data[samp]['var'].get() == 1:
+            s_n = samp
+            break
+
+    if s_n is None:
+        raise ValueError("No valid sample selected for SSA decomposition.")
+
+    x_t = sample_data[s_n]["data"]
+    N = len(x_t)
+
+    M = None
+    run = True
+    while run:
+        user_input1 = simpledialog.askstring("M",
+                                             f"Введіть довжину гусені M для декомпозиції. (Рекомендовано: 2 < M < {trunc(N / 2)}")
+
+        if user_input1 != "":
+            M = int(user_input1)
+            run = False
+        else:
+            continue
+
+    Y, eigenvectors, eigenvals, X = decomposition(x_t, M)
+
+    characteristics(5, Y, eigenvals)
+
+
+def ssa_recomposition(sample_menu: tk.Menu, sample_checkbuttons: list) -> None:
+    """
+    function for setting parameter v by user in window and recomposition
+    """
+    global Y, eigenvectors
+
+    v = None
+    run = True
+    while run:
+        user_input1 = simpledialog.askstring("v",
+                                             f"Введіть кількість головних для переходу. (Рекомендовано: 1 < v < {len(eigenvectors)}")
+
+        if user_input1 != "":
+            v = int(user_input1)
+            run = False
+        else:
+            continue
+
+    x_t_new = recomposition(Y, eigenvectors, v)
+
+    sample_num = len(sample_data) + 1
+    sample_name = f"Вибірка {sample_num}"
+    sample_var = tk.IntVar()
+    sample_data[sample_name] = {"data": x_t_new, "var": sample_var}
+    checkbutton = Checkbutton(text=sample_name, variable=sample_var)
+    sample_checkbuttons.append(checkbutton)
+    sample_menu.add_checkbutton(label=sample_name, variable=sample_var)
+
+
+
+# def ssa_forecasting(fig1, ax1) -> None:
+#     """
+#     Function to perform SSA forecasting.
+#     """
+#
+#     global Y, eigenvectors, M
+#
+#     if Y is None or eigenvectors is None or M is None:
+#         messagebox.showerror("Error", "Please perform decomposition first.")
+#         return
+#
+#     v = simpledialog.askinteger("v", f"Enter number of principal components to use (1 ≤ v ≤ {len(eigenvectors)}):")
+#     if v is None or v < 1 or v > len(eigenvectors):
+#         messagebox.showerror("Error", f"Invalid number of components.")
+#         return
+#
+#     h = simpledialog.askinteger("h", "Enter number of steps ahead to forecast:")
+#     if h is None or h < 1:
+#         messagebox.showerror("Error", f"Invalid number of steps.")
+#         return
+#
+#     forecast = forecasting(Y, eigenvectors, M, v, h)
+#
+#     s_n = None
+#     for i in range(1, len(sample_data) + 1):
+#         samp = f"Вибірка {i}"
+#         if sample_data[samp]['var'].get() == 1:
+#             s_n = samp
+#             break
+#
+#     x_t = sample_data[s_n]["data"]
+#     extended_series = np.concatenate((x_t, forecast))
+#
+#     t = [i for i in range(1, len(extended_series) + 1)]
+#     ax1.plot(t, extended_series, c='red')
+#     fig1.canvas.draw()
+#     fig1.canvas.flush_events()
+
+
+
 
 
 def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.Tk, sample_data: dict,
@@ -229,7 +396,7 @@ def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.T
                          "Зважене ковзне середнє", "Експоненціальне ковзне середнє",
                          "Подвійне експоненціальне ковзне середнє", "Потрійне експоненціальне ковзне середнє",
                          "Індентифікація лінійного тренду", "Вилучення лінійного тренду",
-                         "Індентифікація параболічного тренду", "Вилучення параболічного тренду", "Очистити"]
+                         "Індентифікація параболічного тренду", "Вилучення параболічного тренду", "Прогнозування", "Очистити"]
 
         function_list_window = Toplevel(root)
 
@@ -278,6 +445,11 @@ def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.T
                     remove_parab_trend(sample_data, sample_menu, sample_checkbuttons)
                     pass
 
+                elif selected_function == "Прогнозування":
+                    ssa_forecasting(Y, eigenvectors, M, sample_data, fig1, ax1)
+                    pass
+
+
 
                 elif selected_function == "Очистити":
                     showSample()
@@ -303,5 +475,10 @@ sample_menu = Menu(menubar, tearoff=0)
 filemenu.add_cascade(label="Вибірки", menu=sample_menu)
 
 filemenu.add_command(label='Відобразити', command=showSample)
+filemenu.add_command(label='Декомпозиція', command=lambda: ssa_decomposition(sample_data))
+filemenu.add_command(label='Рекомпозиція',
+                     command=lambda: ssa_recomposition(sample_menu, sample_checkbuttons))
+
+
 
 root.mainloop()
