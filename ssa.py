@@ -1,10 +1,10 @@
 import numpy as np
 from tkinter import simpledialog, messagebox
 
-
 """
 SSA - singular spectrum analysis
 """
+
 
 # set M (2 < M < [N / 2])
 
@@ -33,7 +33,6 @@ def decomposition(x_t: dict, M: int) -> tuple[np.ndarray, np.ndarray, np.ndarray
     Y = eigenvectors.T @ X
 
     return Y, eigenvectors, eigenvals, X
-
 
 
 def diagonal_averaging(X: np.ndarray) -> np.ndarray:
@@ -77,33 +76,21 @@ def forecasting(Y: np.ndarray, A: np.ndarray, M: int, v: int, h: int) -> list[fl
 
     v = min(v, A.shape[1], Y.shape[0])
 
-    # Select the components to use
     A_v = A[:, :v]
     Y_v = Y[:v, :]
 
-    # Reconstruct the series using selected components
-    X_v = A_v @ Y_v  # Reconstructed trajectory matrix using v components
+    X_v = A_v @ Y_v
 
-    # Forecasting
-    # Step 1: Identify the linear recurrence coefficients
-    # Use the reconstructed series to estimate the coefficients
-
-    # Average the reconstructed trajectory matrix along the anti-diagonals
     reconstructed_series = diagonal_averaging(X_v)
 
-    # Determine the coefficients of the linear recurrence relation
-    # Using the last M points of the reconstructed series
     K = M
     last_M_points = reconstructed_series[-K:]
     hankel_matrix = np.column_stack([reconstructed_series[i:-K + i] for i in range(K)])
 
-    # Right-hand side vector
     rhs = reconstructed_series[K:]
 
-    # Solve for the coefficients
     coeffs = np.linalg.lstsq(hankel_matrix, rhs, rcond=None)[0]
 
-    # Use the coefficients to forecast future values
     forecast = []
     last_values = last_M_points.copy()
 
@@ -120,20 +107,19 @@ def ssa_forecasting(Y: np.ndarray, eigenvectors: np.ndarray, M: np.ndarray, samp
     Function to perform SSA forecasting.
     """
 
-    # global
 
     if Y is None or eigenvectors is None or M is None:
-        messagebox.showerror("Error", "Please perform decomposition first.")
+        messagebox.showerror("Помилка", "Спершу зробіть декомпозицію")
         return
 
-    v = simpledialog.askinteger("v", f"Enter number of principal components to use (1 ≤ v ≤ {len(eigenvectors)}):")
+    v = simpledialog.askinteger("v", f"Введіть кількість головних компонент (1 ≤ v ≤ {len(eigenvectors)}):")
     if v is None or v < 1 or v > len(eigenvectors):
-        messagebox.showerror("Error", f"Invalid number of components.")
+        messagebox.showerror("Помилка", f"Невірне значення для компонент")
         return
 
-    h = simpledialog.askinteger("h", "Enter number of steps ahead to forecast:")
+    h = simpledialog.askinteger("h", "Введіть кількість кроків для прогнозування:")
     if h is None or h < 1:
-        messagebox.showerror("Error", f"Invalid number of steps.")
+        messagebox.showerror("Помилка", f"Невірне значення для кількості кроків")
         return
 
     forecast = forecasting(Y, eigenvectors, M, v, h)
@@ -155,6 +141,3 @@ def ssa_forecasting(Y: np.ndarray, eigenvectors: np.ndarray, M: np.ndarray, samp
     ax1.plot(t, forecast, c='red')
     fig1.canvas.draw()
     fig1.canvas.flush_events()
-
-
-
