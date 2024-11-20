@@ -71,11 +71,11 @@ def visualization() -> None:
     t = [i for i in range(1, len(sample_data[s_n]["data"]) + 1)]
     x_t = sample_data[s_n]["data"]
 
-    fig1, ax1 = plt.subplots(figsize=(9, 5), dpi=100)
+    fig1, ax1 = plt.subplots(figsize=(12, 5), dpi=100)
 
     plt.grid(color='grey', linestyle='-', linewidth=0.5)
-    plt.xlabel('X')
-    plt.ylabel('Y')
+    plt.xlabel('t')
+    plt.ylabel('X(t)')
 
     ax1.plot(t, x_t)
 
@@ -215,7 +215,7 @@ def characteristics(tau: int = 5, Y: np.ndarray = None, eigenvals: np.ndarray = 
         T3.insert(END, f"Процес стаціонарний: u = {u2:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
 
     if Y is not None:
-        T4 = Text(master=text_frame, height=15, width=60)
+        T4 = Text(master=text_frame, height=15, width=55)
         T4.pack(side=LEFT, padx=(0, 5))
         T4.delete('1.0', END)
         T4.insert(END, 'Декомпозиція:\n\n')
@@ -476,7 +476,7 @@ filemenu.add_cascade(label="Вибірки", menu=sample_menu)
 
 filemenu.add_command(label='Відобразити', command=showSample)
 filemenu.add_command(label='Декомпозиція', command=lambda: ssa_decomposition(sample_data))
-filemenu.add_command(label='Рекомпозиція',
+filemenu.add_command(label='Реконструкція',
                      command=lambda: ssa_recomposition(sample_menu, sample_checkbuttons))
 
 
