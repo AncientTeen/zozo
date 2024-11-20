@@ -23,7 +23,6 @@ sample_checkbuttons: list = []
 Y, eigenvectors, M = None, None, None
 
 
-
 def openFile() -> None:
     """
     function that opens file and put it to the sample_data
@@ -133,10 +132,10 @@ def characteristics(tau: int = 5, Y: np.ndarray = None, eigenvals: np.ndarray = 
     T2.insert(END, f'hat(m): {mean:.4f}\n')
     T2.insert(END, f'hat(σ): {std:.4f}\n')
 
-    autocovariation = sum([(x_t[i] - mean) * (x_t[i + tau] - mean) for i in range(N - tau)]) / (N - tau)
-    autocorelation = autocovariation / std
+    autocovariance = sum([(x_t[i] - mean) * (x_t[i + tau] - mean) for i in range(N - tau)]) / (N - tau) # [-inf, inf]
+    autocorelation = autocovariance / std ** 2                                                          # [-1, 1]
 
-    T2.insert(END, f'\u03B3({tau}): {autocovariation:.4f}\n')
+    T2.insert(END, f'\u03B3({tau}): {autocovariance:.4f}\n')
     T2.insert(END, f'r({tau}): {autocorelation:.4f}\n')
 
     """trend"""
@@ -277,6 +276,25 @@ def showSample() -> None:
     characteristics()
 
 
+def tau_for_characteristics() -> None:
+    """
+    function to set tau for autocovariance and autocorrelation functions
+    """
+    tau = None
+    run = True
+    while run:
+        user_input1 = simpledialog.askstring("tau",
+                                             f"Введіть tau для автоковаріаційної та автокореляційної функцій:")
+
+        if user_input1 != "":
+            tau = int(user_input1)
+            run = False
+        else:
+            continue
+
+    characteristics(tau=tau)
+
+
 def ssa_decomposition(sample_data: dict) -> None:
     """
     function for setting parameter M by user in window and decomposition
@@ -341,50 +359,6 @@ def ssa_recomposition(sample_menu: tk.Menu, sample_checkbuttons: list) -> None:
     sample_checkbuttons.append(checkbutton)
     sample_menu.add_checkbutton(label=sample_name, variable=sample_var)
 
-
-
-# def ssa_forecasting(fig1, ax1) -> None:
-#     """
-#     Function to perform SSA forecasting.
-#     """
-#
-#     global Y, eigenvectors, M
-#
-#     if Y is None or eigenvectors is None or M is None:
-#         messagebox.showerror("Error", "Please perform decomposition first.")
-#         return
-#
-#     v = simpledialog.askinteger("v", f"Enter number of principal components to use (1 ≤ v ≤ {len(eigenvectors)}):")
-#     if v is None or v < 1 or v > len(eigenvectors):
-#         messagebox.showerror("Error", f"Invalid number of components.")
-#         return
-#
-#     h = simpledialog.askinteger("h", "Enter number of steps ahead to forecast:")
-#     if h is None or h < 1:
-#         messagebox.showerror("Error", f"Invalid number of steps.")
-#         return
-#
-#     forecast = forecasting(Y, eigenvectors, M, v, h)
-#
-#     s_n = None
-#     for i in range(1, len(sample_data) + 1):
-#         samp = f"Вибірка {i}"
-#         if sample_data[samp]['var'].get() == 1:
-#             s_n = samp
-#             break
-#
-#     x_t = sample_data[s_n]["data"]
-#     extended_series = np.concatenate((x_t, forecast))
-#
-#     t = [i for i in range(1, len(extended_series) + 1)]
-#     ax1.plot(t, extended_series, c='red')
-#     fig1.canvas.draw()
-#     fig1.canvas.flush_events()
-
-
-
-
-
 def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.Tk, sample_data: dict,
                           sample_menu: tk.Menu, sample_checkbuttons: list, fig1, ax1):  # , x, y):
     """
@@ -396,7 +370,8 @@ def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.T
                          "Зважене ковзне середнє", "Експоненціальне ковзне середнє",
                          "Подвійне експоненціальне ковзне середнє", "Потрійне експоненціальне ковзне середнє",
                          "Індентифікація лінійного тренду", "Вилучення лінійного тренду",
-                         "Індентифікація параболічного тренду", "Вилучення параболічного тренду", "Прогнозування", "Очистити"]
+                         "Індентифікація параболічного тренду", "Вилучення параболічного тренду", "Прогнозування",
+                         "Очистити"]
 
         function_list_window = Toplevel(root)
 
@@ -475,10 +450,11 @@ sample_menu = Menu(menubar, tearoff=0)
 filemenu.add_cascade(label="Вибірки", menu=sample_menu)
 
 filemenu.add_command(label='Відобразити', command=showSample)
+filemenu.add_command(label='Задати tau', command=tau_for_characteristics)
+
+
 filemenu.add_command(label='Декомпозиція', command=lambda: ssa_decomposition(sample_data))
 filemenu.add_command(label='Реконструкція',
                      command=lambda: ssa_recomposition(sample_menu, sample_checkbuttons))
-
-
 
 root.mainloop()

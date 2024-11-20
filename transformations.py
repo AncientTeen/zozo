@@ -1,4 +1,3 @@
-import matplotlib
 import numpy as np
 import tkinter as tk
 from tkinter import *
@@ -60,9 +59,7 @@ def median_smoothing(sample_data: dict, fig1, ax1) -> None:
     x_t = sample_data[s_n]["data"]
     N = len(x_t)
 
-    # M0 = 2 * x_t[0] - x_t[1]
     m0 = (4 * x_t[0] + x_t[1] + 2 * x_t[2]) / 3
-    # MN = 2 * x_t[-1] - x_t[-2]
     mN = (4 * x_t[-1] + x_t[-2] + 2 * x_t[-3]) / 3
     M = [m0]
     for i in range(1, N - 1):

@@ -179,7 +179,6 @@ def remove_lin_trend(sample_data: dict, sample_menu: tk.Menu, sample_checkbutton
     x_trend = [(a_0 + a_1 * t[i]) for i in range(N)]
 
     x_t_new = [x_t[i] - x_trend[i] for i in range(N)]
-    # x_t_new = [x_t[i] - x_trend[i] if x_t[i] < x_trend[i] else x_t[i] + x_trend[i] for i in range(N)]
 
     sample_num = len(sample_data) + 1
     sample_name = f"Вибірка {sample_num}"
@@ -270,7 +269,6 @@ def remove_parab_trend(sample_data: dict, sample_menu: tk.Menu, sample_checkbutt
     x_trend = [(a_0 + a_1 * t[i] + a_2 * t[i] ** 2) for i in range(N)]
 
     x_t_new = [x_t[i] - x_trend[i] for i in range(N)]
-    # x_t_new = [x_t[i] - x_trend[i] if x_t[i] < x_trend[i] else x_t[i] + x_trend[i] for i in range(N)]
 
     sample_num = len(sample_data) + 1
     sample_name = f"Вибірка {sample_num}"
