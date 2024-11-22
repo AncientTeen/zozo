@@ -16,6 +16,11 @@ def decomposition(x_t: dict, M: int) -> tuple[np.ndarray, np.ndarray, np.ndarray
 
     N = len(x_t)
 
+    """implemented standardization before decomposition"""
+    mean = np.mean(x_t)
+    std = np.std(x_t)
+    x_t = (x_t - mean) / std
+
     k = M
     l = N - M + 1
     X = np.zeros((k, l))
@@ -59,7 +64,6 @@ def recomposition(Y: np.ndarray, A: np.ndarray, v: int) -> np.ndarray:
     Recomposition function of SSA.
     """
 
-    # Ensure v does not exceed available components
     v = min(v, A.shape[1], Y.shape[0])
 
     X_hat = A[:, :v] @ Y[:v, :]
@@ -136,8 +140,6 @@ def ssa_forecasting(Y: np.ndarray, eigenvectors: np.ndarray, M: np.ndarray, samp
     forecast = [x_t[-1]] + forecast
 
     t = [i for i in range(len(x_t), len(x_t) + len(forecast))]
-    print(t)
-    print(forecast)
     ax1.plot(t, forecast, c='red')
     fig1.canvas.draw()
     fig1.canvas.flush_events()

@@ -18,6 +18,13 @@ def sign_criterion(x_t: list) -> float:
         else:
             y.append(0)
 
+    one = 0
+    zeros = 0
+    for i in y:
+        if i == 1:
+            one += 1
+        else:
+            zeros += 1
     c = sum(y)
     E_c = (n - 1) / 2
     D_c = (n + 1) / 12
@@ -130,7 +137,7 @@ def identification_lin_trend(sample_data: dict, fig1, ax1) -> None:
     function for identification a linear trend
     """
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 
@@ -159,7 +166,7 @@ def remove_lin_trend(sample_data: dict, sample_menu: tk.Menu, sample_checkbutton
     function for extracting a linear trend
     """
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 
@@ -194,7 +201,7 @@ def identification_parab_trend(sample_data: dict, fig1, ax1) -> None:
     function for identification a polynomial trend
     """
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 
@@ -236,7 +243,7 @@ def remove_parab_trend(sample_data: dict, sample_menu: tk.Menu, sample_checkbutt
     function for extracting a polynomial trend
     """
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 

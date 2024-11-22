@@ -3,6 +3,7 @@ import numpy as np
 import tkinter as tk
 from tkinter import *
 from math import trunc
+from tkinter import ttk
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 from tkinter import filedialog as fd, simpledialog
@@ -48,7 +49,7 @@ def openFile() -> None:
 
     for i in range(len(t)):
         sample_num = len(sample_data) + 1
-        sample_name = f"Вибірка {sample_num}"
+        sample_name = f"Ряд {sample_num}"
         sample_var = tk.IntVar()
         arr = t[i]
         sample_data[sample_name] = {"data": arr, "var": sample_var}
@@ -63,7 +64,7 @@ def visualization() -> None:
     """
 
     for i in range(1, len(sample_data) + 1):
-        str = f"Вибірка {i}"
+        str = f"Ряд {i}"
         if sample_data[str]['var'].get() == 1:
             s_n = str
 
@@ -94,13 +95,14 @@ def visualization() -> None:
     toolbar.grid(row=1, column=0)
 
 
-def characteristics(tau: int = 5, Y: np.ndarray = None, eigenvals: np.ndarray = None) -> None:
+
+def characteristics(Y: np.ndarray = None, eigenvals: np.ndarray = None) -> None:
     """
     function that calculates characteristics of time series
     """
 
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 
@@ -132,11 +134,11 @@ def characteristics(tau: int = 5, Y: np.ndarray = None, eigenvals: np.ndarray = 
     T2.insert(END, f'hat(m): {mean:.4f}\n')
     T2.insert(END, f'hat(σ): {std:.4f}\n')
 
-    autocovariance = sum([(x_t[i] - mean) * (x_t[i + tau] - mean) for i in range(N - tau)]) / (N - tau) # [-inf, inf]
-    autocorelation = autocovariance / std ** 2                                                          # [-1, 1]
-
-    T2.insert(END, f'\u03B3({tau}): {autocovariance:.4f}\n')
-    T2.insert(END, f'r({tau}): {autocorelation:.4f}\n')
+    # autocovariance = sum([(x_t[i] - mean) * (x_t[i + tau] - mean) for i in range(N - tau)]) / (N - tau)  # [-inf, inf]
+    # autocorelation = autocovariance / std ** 2  # [-1, 1]
+    #
+    # T2.insert(END, f'\u03B3({tau}): {autocovariance:.4f}\n')
+    # T2.insert(END, f'r({tau}): {autocorelation:.4f}\n')
 
     """trend"""
     T3 = Text(master=text_frame, height=15, width=45)
@@ -153,9 +155,9 @@ def characteristics(tau: int = 5, Y: np.ndarray = None, eigenvals: np.ndarray = 
     C = sign_criterion(x_t)
 
     if C > critical_value:
-        T3.insert(END, f"Тенденція на спадання: C = {C:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
-    elif C < -critical_value:
         T3.insert(END, f"Тенденція на зростання: C = {C:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
+    elif C < -critical_value:
+        T3.insert(END, f"Тенденція на спадання: C = {C:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
     else:
         T3.insert(END, f"Процес стаціонарний: C = {C:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
 
@@ -164,9 +166,9 @@ def characteristics(tau: int = 5, Y: np.ndarray = None, eigenvals: np.ndarray = 
     u1 = mann_criterion(x_t)
 
     if u1 > critical_value:
-        T3.insert(END, f"Тенденція на спадання: u = {u1:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
-    elif u1 < -critical_value:
         T3.insert(END, f"Тенденція на зростання: u = {u1:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
+    elif u1 < -critical_value:
+        T3.insert(END, f"Тенденція на спадання: u = {u1:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
     else:
         T3.insert(END, f"Процес стаціонарний: u = {u1:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
 
@@ -206,12 +208,13 @@ def characteristics(tau: int = 5, Y: np.ndarray = None, eigenvals: np.ndarray = 
 
     u2 = abbe_criterion(x_t)
 
-    if u2 > critical_value:
-        T3.insert(END, f"Тенденція на спадання: u = {u2:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
-    elif u2 < -critical_value:
-        T3.insert(END, f"Тенденція на зростання: u = {u2:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
+
+
+    if critical_value > abs(u2) > -critical_value:
+        T3.insert(END, f"Процес стаціонарний: u = |{u2:.3f}|, \nкритичне значення = ±{critical_value:.3f}\n")
     else:
-        T3.insert(END, f"Процес стаціонарний: u = {u2:.3f}, \nкритичне значення = ±{critical_value:.3f}\n")
+        T3.insert(END, f"Тренд існує: u = |{u2:.3f}|, \nкритичне значення = ±{critical_value:.3f}\n")
+
 
     if Y is not None:
         T4 = Text(master=text_frame, height=15, width=55)
@@ -276,23 +279,58 @@ def showSample() -> None:
     characteristics()
 
 
-def tau_for_characteristics() -> None:
+def show_autocorrelation() -> None:
     """
-    function to set tau for autocovariance and autocorrelation functions
+    Function that calculates and shows the autocorrelation function with a toolbar.
     """
-    tau = None
-    run = True
-    while run:
-        user_input1 = simpledialog.askstring("tau",
-                                             f"Введіть tau для автоковаріаційної та автокореляційної функцій:")
+    for i in range(1, len(sample_data) + 1):
+        samp = f"Ряд {i}"
+        if sample_data[samp]['var'].get() == 1:
+            s_n = samp
+            break
 
-        if user_input1 != "":
-            tau = int(user_input1)
-            run = False
-        else:
-            continue
+    x_t = np.array(sample_data[s_n]["data"])
+    N = len(x_t)
 
-    characteristics(tau=tau)
+    mean = np.mean(x_t)
+    variance = np.var(x_t)
+
+    if variance == 0:
+        print("Variance is zero; autocorrelation is undefined.")
+        return
+
+    x_t_centered = x_t - mean
+    autocovariance = np.correlate(x_t_centered, x_t_centered, mode='full')
+    autocovariance = autocovariance[N - 1:]
+
+    autocorrelation = autocovariance / (variance * np.arange(N, 0, -1))
+
+    autocorrelation = np.clip(autocorrelation, -1, 1)
+
+    tau = np.arange(len(autocorrelation))
+
+
+    fig1, ax1 = plt.subplots(figsize=(12, 5), dpi=100)
+    ax1.plot(tau, autocorrelation, c='green')
+    ax1.set_title("Автокореляційна функція")
+    ax1.set_xlabel("τ")
+    ax1.set_ylabel("Автокореляція")
+    ax1.grid(True)
+
+    fig_window = tk.Toplevel()
+    fig_window.title("Автокореляційна функція")
+
+    canvas = FigureCanvasTkAgg(fig1, master=fig_window)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+    toolbar = NavigationToolbar2Tk(canvas, fig_window)
+    toolbar.update()
+    toolbar.pack()
+
+    plt.close(fig1)
+
+
 
 
 def ssa_decomposition(sample_data: dict) -> None:
@@ -303,7 +341,7 @@ def ssa_decomposition(sample_data: dict) -> None:
 
     s_n = None
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
             break
@@ -328,10 +366,11 @@ def ssa_decomposition(sample_data: dict) -> None:
 
     Y, eigenvectors, eigenvals, X = decomposition(x_t, M)
 
-    characteristics(5, Y, eigenvals)
+    characteristics(Y, eigenvals)
 
 
-def ssa_recomposition(sample_menu: tk.Menu, sample_checkbuttons: list) -> None:
+# def ssa_recomposition(sample_menu: tk.Menu, sample_checkbuttons: list) -> None:
+def ssa_recomposition(fig1, ax1) -> None:
     """
     function for setting parameter v by user in window and recomposition
     """
@@ -349,15 +388,26 @@ def ssa_recomposition(sample_menu: tk.Menu, sample_checkbuttons: list) -> None:
         else:
             continue
 
-    x_t_new = recomposition(Y, eigenvectors, v)
+    for i in range(1, len(sample_data) + 1):
+        samp = f"Ряд {i}"
+        if sample_data[samp]['var'].get() == 1:
+            s_n = samp
+            break
 
-    sample_num = len(sample_data) + 1
-    sample_name = f"Вибірка {sample_num}"
-    sample_var = tk.IntVar()
-    sample_data[sample_name] = {"data": x_t_new, "var": sample_var}
-    checkbutton = Checkbutton(text=sample_name, variable=sample_var)
-    sample_checkbuttons.append(checkbutton)
-    sample_menu.add_checkbutton(label=sample_name, variable=sample_var)
+    x_t = np.array(sample_data[s_n]["data"])
+    mean = np.mean(x_t)
+    std = np.std(x_t)
+
+
+    x_t_new = recomposition(Y, eigenvectors, v)
+    reconstructed_series = (x_t_new * std) + mean
+
+    t = [i for i in range(1, len(reconstructed_series) + 1)]
+
+    ax1.plot(t, reconstructed_series, c='red')
+    fig1.canvas.draw()
+    fig1.canvas.flush_events()
+
 
 def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.Tk, sample_data: dict,
                           sample_menu: tk.Menu, sample_checkbuttons: list, fig1, ax1):  # , x, y):
@@ -366,11 +416,11 @@ def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.T
     """
 
     if event.button == 3:
-        function_list = ["Вилучення аномальних значень", "Медіанне згладжування", "Просте ковзне середнє",
+        function_list = ["Автокореляційна функція", "Вилучення аномальних значень", "Медіанне згладжування", "Просте ковзне середнє",
                          "Зважене ковзне середнє", "Експоненціальне ковзне середнє",
                          "Подвійне експоненціальне ковзне середнє", "Потрійне експоненціальне ковзне середнє",
                          "Індентифікація лінійного тренду", "Вилучення лінійного тренду",
-                         "Індентифікація параболічного тренду", "Вилучення параболічного тренду", "Прогнозування",
+                         "Індентифікація параболічного тренду", "Вилучення параболічного тренду", "Реконструкція", "Прогнозування",
                          "Очистити"]
 
         function_list_window = Toplevel(root)
@@ -383,6 +433,10 @@ def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.T
             selected_index = listbox.curselection()
             if selected_index:
                 selected_function = function_list[selected_index[0]]
+
+                if selected_function == "Автокореляційна функція":
+                    show_autocorrelation()
+                    pass
 
                 if selected_function == "Вилучення аномальних значень":
                     remove_anomalous(sample_data, sample_menu, sample_checkbuttons)
@@ -420,6 +474,10 @@ def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.T
                     remove_parab_trend(sample_data, sample_menu, sample_checkbuttons)
                     pass
 
+                elif selected_function == "Реконструкція":
+                    ssa_recomposition(fig1, ax1)
+                    pass
+
                 elif selected_function == "Прогнозування":
                     ssa_forecasting(Y, eigenvectors, M, sample_data, fig1, ax1)
                     pass
@@ -440,6 +498,8 @@ root = Tk()
 
 root.geometry("1200x800")
 
+
+
 menubar = Menu(root)
 filemenu = Menu(menubar, tearoff=0)
 root.config(menu=menubar)
@@ -447,14 +507,14 @@ menubar.add_cascade(label="Меню", menu=filemenu)
 filemenu.add_command(label="Відкрити файл", command=openFile)
 
 sample_menu = Menu(menubar, tearoff=0)
-filemenu.add_cascade(label="Вибірки", menu=sample_menu)
+filemenu.add_cascade(label="Часові ряди", menu=sample_menu)
 
 filemenu.add_command(label='Відобразити', command=showSample)
-filemenu.add_command(label='Задати tau', command=tau_for_characteristics)
+# filemenu.add_command(label="Відобразити", command=lambda: showSample(notebook))
 
 
 filemenu.add_command(label='Декомпозиція', command=lambda: ssa_decomposition(sample_data))
-filemenu.add_command(label='Реконструкція',
-                     command=lambda: ssa_recomposition(sample_menu, sample_checkbuttons))
+# filemenu.add_command(label='Реконструкція',
+#                      command=lambda: ssa_recomposition(sample_menu, sample_checkbuttons))
 
 root.mainloop()

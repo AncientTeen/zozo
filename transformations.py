@@ -11,7 +11,7 @@ def remove_anomalous(sample_data: dict, sample_menu: tk.Menu, sample_checkbutton
     """
 
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 
@@ -26,7 +26,6 @@ def remove_anomalous(sample_data: dict, sample_menu: tk.Menu, sample_checkbutton
         if mean - k * std < x_t[i] < mean + k * std:
             temp.append(x_t[i])
         else:
-            print('*')
             x_new = 2 * x_t[i - 1] - x_t[i - 2]
             temp.append(x_new)
 
@@ -52,7 +51,7 @@ def median_smoothing(sample_data: dict, fig1, ax1) -> None:
     function for smoothing data using median
     """
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 
@@ -80,7 +79,7 @@ def sma(sample_data: dict, fig1, ax1) -> None:
     simple moving average function for smoothing data with window size of 3
     """
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 
@@ -111,7 +110,7 @@ def wma(sample_data: dict, fig1, ax1) -> None:
     """
 
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 
@@ -144,7 +143,7 @@ def ema(sample_data: dict, fig1, ax1) -> None:
     exponential moving average function for smoothing data with window size of 3
     """
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 
@@ -175,7 +174,7 @@ def dema(sample_data: dict, fig1, ax1) -> None:
     double Exponential moving average function for smoothing data with window size of 3
     """
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 
@@ -208,7 +207,7 @@ def tema(sample_data: dict, fig1, ax1) -> None:
     triple Exponential moving average function for smoothing data with window size of 3
     """
     for i in range(1, len(sample_data) + 1):
-        samp = f"Вибірка {i}"
+        samp = f"Ряд {i}"
         if sample_data[samp]['var'].get() == 1:
             s_n = samp
 
