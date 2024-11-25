@@ -2,6 +2,8 @@ import numpy as np
 import tkinter as tk
 from tkinter import *
 
+from numerical_functions import mean, std
+
 
 
 
@@ -17,13 +19,13 @@ def remove_anomalous(sample_data: dict, sample_menu: tk.Menu, sample_checkbutton
 
     x_t = sample_data[s_n]["data"]
 
-    mean = np.mean(x_t)
-    std = np.std(x_t)
+    mean_series = mean(x_t)
+    std_series = std(x_t)
     k = 4  # recommended to set k from the interval [3, 9]
 
     temp = [x_t[0], x_t[1]]
     for i in range(2, len(x_t)):
-        if mean - k * std < x_t[i] < mean + k * std:
+        if mean_series - k * std_series < x_t[i] < mean_series + k * std_series:
             temp.append(x_t[i])
         else:
             x_new = 2 * x_t[i - 1] - x_t[i - 2]
