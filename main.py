@@ -3,17 +3,18 @@ import numpy as np
 import tkinter as tk
 from tkinter import *
 from math import trunc
-from tkinter import ttk
 from scipy.stats import norm
 import matplotlib.pyplot as plt
 from tkinter import filedialog as fd, simpledialog
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backends._backend_tk import NavigationToolbar2Tk
 
+from numerical_functions import mean, std
 from ssa import decomposition, recomposition, ssa_forecasting
 from transformations import remove_anomalous, median_smoothing, sma, wma, ema, dema, tema
 from trend_functions import sign_criterion, mann_criterion, series_criterion, rise_n_fall_criterion, abbe_criterion, \
     identification_lin_trend, remove_lin_trend, identification_parab_trend, remove_parab_trend
+
 
 array: list = []
 fig1, ax1 = None, None
@@ -109,6 +110,7 @@ def characteristics(Y: np.ndarray = None, eigenvals: np.ndarray = None) -> None:
     t = [i for i in range(1, len(sample_data[s_n]["data"]) + 1)]
     x_t = sample_data[s_n]["data"]
 
+
     N = len(x_t)
     text_frame = Frame(root)
     text_frame.grid(row=3, column=0, columnspan=2, sticky='w', padx=5, pady=5)
@@ -129,10 +131,10 @@ def characteristics(Y: np.ndarray = None, eigenvals: np.ndarray = None) -> None:
     T2.delete('1.0', END)
     T2.insert(END, 'Характеристики часового ряду:\n\n')
 
-    mean = np.mean(x_t)
-    std = np.std(x_t)
-    T2.insert(END, f'hat(m): {mean:.4f}\n')
-    T2.insert(END, f'hat(σ): {std:.4f}\n')
+    mean_series = mean(x_t)
+    std_series = std(x_t)
+    T2.insert(END, f'hat(m): {mean_series:.4f}\n')
+    T2.insert(END, f'hat(σ): {std_series:.4f}\n')
 
     # autocovariance = sum([(x_t[i] - mean) * (x_t[i + tau] - mean) for i in range(N - tau)]) / (N - tau)  # [-inf, inf]
     # autocorelation = autocovariance / std ** 2  # [-1, 1]
@@ -222,32 +224,7 @@ def characteristics(Y: np.ndarray = None, eigenvals: np.ndarray = None) -> None:
         T4.delete('1.0', END)
         T4.insert(END, 'Декомпозиція:\n\n')
 
-        """I don`t like how it looks"""
-        # T4.insert(END, 'Y:\n\n')
-        # for i in range(len(Y)):
-        #     for j in range(len(Y[i])):
-        #         T4.insert(END, f"{Y[i][j]:.2f} ")
-        #     T4.insert(END, f"\n")
-        #
-        # T4.insert(END, f"\n")
-        #
-        # T4.insert(END, f"\nВласні числа: \t")
-        # for i in range(len(eigenvals)):
-        #     T4.insert(END, f"{eigenvals[i]:.4f}\t\t")
-        # T4.insert(END, f"\n")
-        #
-        # T4.insert(END, f"\n% на напрям:  \t")
-        # percentDir = [eigenvals[i] / len(eigenvals) for i in range(len(eigenvals))]
-        # for i in range(len(eigenvals)):
-        #     T4.insert(END, f"{percentDir[i] * 100:.4f}%\t\t")
-        # T4.insert(END, f"\n")
-        #
-        # T4.insert(END, f"\nНакопичений %:\t")
-        # perc = 0
-        # for i in range(len(eigenvals)):
-        #     perc += percentDir[i] * 100
-        #     T4.insert(END, f"{perc:.4f}%\t\t")
-        # T4.insert(END, f"\n\n")
+
         total_variance = np.sum(eigenvals)
         single_variance = [(eigenvals[i] / total_variance) for i in range(len(eigenvals))]
         cumulative_variance = np.cumsum(eigenvals) / total_variance
@@ -292,14 +269,14 @@ def show_autocorrelation() -> None:
     x_t = np.array(sample_data[s_n]["data"])
     N = len(x_t)
 
-    mean = np.mean(x_t)
-    variance = np.var(x_t)
+    mean_series = mean(x_t)
+    variance = std(x_t) ** 2
 
     if variance == 0:
-        print("Variance is zero; autocorrelation is undefined.")
+        print("Дисперсія дорівнює нулю, автокореляція не визначена")
         return
 
-    x_t_centered = x_t - mean
+    x_t_centered = x_t - mean_series
     autocovariance = np.correlate(x_t_centered, x_t_centered, mode='full')
     autocovariance = autocovariance[N - 1:]
 
@@ -347,7 +324,7 @@ def ssa_decomposition(sample_data: dict) -> None:
             break
 
     if s_n is None:
-        raise ValueError("No valid sample selected for SSA decomposition.")
+        raise ValueError("Для декомпозиції SSA не було відібрано валідної вибірки.")
 
     x_t = sample_data[s_n]["data"]
     N = len(x_t)
@@ -369,24 +346,33 @@ def ssa_decomposition(sample_data: dict) -> None:
     characteristics(Y, eigenvals)
 
 
-# def ssa_recomposition(sample_menu: tk.Menu, sample_checkbuttons: list) -> None:
+
 def ssa_recomposition(fig1, ax1) -> None:
     """
-    function for setting parameter v by user in window and recomposition
+    Function for setting parameters for recomposition and reconstruction.
     """
     global Y, eigenvectors
 
-    v = None
-    run = True
-    while run:
-        user_input1 = simpledialog.askstring("v",
-                                             f"Введіть кількість головних для переходу. (Рекомендовано: 1 < v < {len(eigenvectors)}")
+    component_option = simpledialog.askstring(
+        "Режим реконструкції",
+        "Виберіть режим реконструкції: \n"
+        "'1' - Точна реконструкція (всі компоненти)\n"
+        "'2' - Використовуйте перші кілька компонентів (низькочастотна фільтрація)\n"
+        "'3' - Використовуйте певні компоненти (наприклад, 1, 2, 3)"
+    )
 
-        if user_input1 != "":
-            v = int(user_input1)
-            run = False
-        else:
-            continue
+    components = []
+    if component_option == '2':
+        user_input = simpledialog.askinteger("Перші компоненти", "Введіть кількість компонентів для використання (v):")
+        if user_input is not None and user_input > 0:
+            components = [user_input]
+    elif component_option == '3':
+        user_input = simpledialog.askstring(
+            "Окремі компоненти",
+            "Введіть індекси компонентів для використання (наприклад, 1,2,3):"
+        )
+        if user_input:
+            components = [int(idx.strip()) - 1 for idx in user_input.split(',')]
 
     for i in range(1, len(sample_data) + 1):
         samp = f"Ряд {i}"
@@ -395,18 +381,20 @@ def ssa_recomposition(fig1, ax1) -> None:
             break
 
     x_t = np.array(sample_data[s_n]["data"])
-    mean = np.mean(x_t)
-    std = np.std(x_t)
+    mean_series = mean(x_t)
+    std_series = std(x_t)
 
-
-    x_t_new = recomposition(Y, eigenvectors, v)
-    reconstructed_series = (x_t_new * std) + mean
+    x_t_new = recomposition(Y, eigenvectors, component_option, components)
+    reconstructed_series = (x_t_new * std_series) + mean_series
 
     t = [i for i in range(1, len(reconstructed_series) + 1)]
 
-    ax1.plot(t, reconstructed_series, c='red')
+    ax1.plot(t, reconstructed_series, c='red', label=f'Реконструкція ({component_option})')
+    ax1.legend()
     fig1.canvas.draw()
     fig1.canvas.flush_events()
+
+
 
 
 def display_function_list(event: matplotlib.backend_bases.MouseEvent, root: tk.Tk, sample_data: dict,
@@ -510,11 +498,8 @@ sample_menu = Menu(menubar, tearoff=0)
 filemenu.add_cascade(label="Часові ряди", menu=sample_menu)
 
 filemenu.add_command(label='Відобразити', command=showSample)
-# filemenu.add_command(label="Відобразити", command=lambda: showSample(notebook))
 
 
 filemenu.add_command(label='Декомпозиція', command=lambda: ssa_decomposition(sample_data))
-# filemenu.add_command(label='Реконструкція',
-#                      command=lambda: ssa_recomposition(sample_menu, sample_checkbuttons))
 
 root.mainloop()
