@@ -134,6 +134,10 @@ def forecasting(Y: np.ndarray, A: np.ndarray, M: int, v: int, h: int, forecast_s
 
 
 
+
+"""*************"""
+
+
 def ssa_forecasting(Y: np.ndarray, eigenvectors: np.ndarray, M: np.ndarray, sample_data: dict, fig1, ax1) -> None:
     """
     Function to perform SSA forecasting
@@ -158,10 +162,10 @@ def ssa_forecasting(Y: np.ndarray, eigenvectors: np.ndarray, M: np.ndarray, samp
         messagebox.showerror("Помилка", f"Невірне значення для компонент")
         return
 
-    h = simpledialog.askinteger("h", "Введіть кількість кроків для прогнозування:")
-    if h is None or h < 1:
-        messagebox.showerror("Помилка", f"Невірне значення для кількості кроків")
-        return
+    # h = simpledialog.askinteger("h", "Введіть кількість кроків для прогнозування:")
+    # if h is None or h < 1:
+    #     messagebox.showerror("Помилка", f"Невірне значення для кількості кроків")
+    #     return
 
     forecast_start_index = simpledialog.askinteger(
         "Індекс початку прогнозу",
@@ -174,29 +178,46 @@ def ssa_forecasting(Y: np.ndarray, eigenvectors: np.ndarray, M: np.ndarray, samp
 
     Y = np.array(Y)
 
-
     x_t = sample_data[s_n]["data"]
 
-    mean_series = mean(x_t[:forecast_start_index])
-    std_series = std(x_t[:forecast_start_index])
+    forecast_series = []
+    forecast_diff = []
+    h = 1
+    for i in range(forecast_start_index, len(x_t) + 1):
 
-    forecast = forecasting(Y, eigenvectors, M, v, h, forecast_start_index)
+        mean_series = mean(x_t[:i])
+        std_series = std(x_t[:i])
 
-    forecast = np.array(forecast)
-    forecast = (forecast * std_series) + mean_series
+        forecast = forecasting(Y, eigenvectors, M, v, h, i)
 
-    forecast = [x_t[forecast_start_index - 1]] + forecast.tolist()
+        forecast = np.array(forecast)
+        forecast = (forecast * std_series) + mean_series
+
+        forecast_series.append(forecast)
+
+        diff = abs(x_t[i - 1] - forecast) / x_t[i - 1]
+        forecast_diff.append(diff)
 
 
+    t = [i for i in range(forecast_start_index, forecast_start_index + len(forecast_series))]
 
-    t = [i for i in range(forecast_start_index, forecast_start_index + len(forecast))]
+    forecast_std = mean(forecast_diff)
 
-    ax1.plot(t, forecast, c='red', label='Forecast')
+    ax1.plot(t, forecast_series, c='red', label='Forecast')
+
+    text_x = t[-1]
+    text_y = max(forecast_series)
+    ax1.text(
+        text_x, text_y,
+        f'STD: {float(forecast_std) * 100:.2f}%',  # Convert to float before formatting
+        fontsize=10, color='green',
+        ha='right', va='bottom',
+    )
+
     ax1.legend()
     fig1.canvas.draw()
     fig1.canvas.flush_events()
 
 
-
-
+"""*************"""
 
