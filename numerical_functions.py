@@ -33,7 +33,7 @@ def std(arr: list[float]) -> float:
 
 def median(data: list[float]) -> float:
     """
-    Manually compute the median of a list of numbers.
+    Manually compute the median of a list of numbers
     """
 
     sorted_data = sorted(data)
@@ -79,7 +79,7 @@ def transpose(A: list[list[float]]) -> list[list[float]]:
 
 def eig_decomposition(A: list[list[float]]) -> tuple[list[float], list[list[float]]]:
     """
-    Simple power iteration-based eigen decomposition without 'sum'
+    Simple power iteration-based eigen decomposition
     """
 
     def power_iteration(mat, num_simulations: int = 100):
@@ -131,7 +131,7 @@ def eig_decomposition(A: list[list[float]]) -> tuple[list[float], list[list[floa
 
 def solve_least_squares(A: list[list[float]], b: list[float]) -> list[float]:
     """
-    Solve the least squares problem Ax = b using manual computation.
+    Solve the least squares problem Ax = b using manual computation
     """
 
     A_T = transpose(A)
@@ -161,7 +161,7 @@ def solve_least_squares(A: list[list[float]], b: list[float]) -> list[float]:
 
 def dot_product(v1: list[float], v2: list[float]) -> float:
     """
-    function to compute the dot product of two vectors.
+    function to compute the dot product of two vectors
     """
 
     result = 0.0
