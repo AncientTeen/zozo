@@ -60,8 +60,8 @@ def median_smoothing(sample_data: dict, fig1, ax1) -> None:
     x_t = sample_data[s_n]["data"]
     N = len(x_t)
 
-    m0 = (4 * x_t[0] + x_t[1] + 2 * x_t[2]) / 3
-    mN = (4 * x_t[-1] + x_t[-2] + 2 * x_t[-3]) / 3
+    m0 = x_t[0]
+    mN = x_t[-1]
     M = [m0]
     for i in range(1, N - 1):
         m_temp = (x_t[i - 1] + x_t[i] + x_t[i + 1]) / 3
