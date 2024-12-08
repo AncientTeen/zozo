@@ -199,7 +199,7 @@ def characteristics(Y: np.ndarray = None, eigenvals: np.ndarray = None) -> None:
     elif N > 153:
         d2_check = 7
 
-    if v2 > v2_check and d2 < d2_check:
+    if v2 > v2_check and d2 > d2_check:
         T3.insert(END,
                   f"Процес стаціонарний: (V(N), D(N)) = ({v2}, {d2}), \nкритичні значення = ({v2_check}, {d2_check})\n")
     else:
